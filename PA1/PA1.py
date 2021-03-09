@@ -1,9 +1,7 @@
 #!/usr/bin/python
-
 import sys
 import string
 from collections import Counter
-
 
 def preprocessing(textfile):
     '''
@@ -28,79 +26,74 @@ def preprocessing(textfile):
     for sublist in preprocessed_text:
         for item in sublist:
             flat_list.append(item)
-
+    print(flat_list)
     return flat_list
 
-
-
-def get_aggregated_window_text(textfile, center_word, window_size):
+def get_aggregated_window_text(text_list, center_word, window_size):
     border = window_size//2 # assuming uneven window_size
+    center_word = center_word.lower()
 
     #get index positions of center word
     center_index = []
-    for i, j in enumerate(textfile):
+    for i, j in enumerate(text_list):
         if j == center_word:
             center_index.append(i)
+    print('center index', center_index)
 
     #get all text for center word
     center_text = []
     for el in center_index: # at each occurrence of center_word:
-        center_text.append(textfile[el-border:el]) #TODO #problem wenn erster Teil segativ wird!  #lower boundary
-        center_text.append(textfile[el+1:el+border+1]) # upper boundary
-
+        center_text.extend(text_list[el-border:el]) #lower boundary
+        center_text.extend(text_list[el+1:el+border+1]) # upper boundary
     return center_text
 
+def count_occurences(text_list, center_word, window_size, T_list):
+    counts = [0] * len(T_list)  # stores values
+    center_text = get_aggregated_window_text(text_list, center_word.lower(), window_size)
+    print('center text', center_text)
+    #delete all words not in T_list
+    cleaned_center_text = [x for x in center_text if x in T_list]
+    print('cleaned center text ', cleaned_center_text)
+    counts = Counter(cleaned_center_text)
+    print('Counts: ', counts)
 
+    #write counts into vector (at correct position)
+    count_vector = []
+    for el in T_list:
+        count_vector.append(counts[el])
+    print('Count Vector: ', count_vector)
 
+    return count_vector
 
-
-
-
-
-
-
-def count_occurences(textfile, center_word, window_size, T):
-    counts = [0] * len(T)  # stores values
-    center_text = get_aggregated_window_text(textfile, center_word, window_size)
-
-    #delete all words not in T
-
-    counter(center_text)
-    return counts
-
-
-
-def TxB(textfile, B, T):
+def TxB(text_list, B_list, T_list):
     window_size = 5
 
-    #Preprocess textfiles B and T as well
-    B = preprocessing(B)
-    T = preprocessing(T)
-    print('T: ', T)
-    print('B: ', B)
+    cooccurrence_matrix = {key: [0] * len(T_list) for key in B_list}  # structure to store values (for each T -> 0 vector)
+    for key in cooccurrence_matrix: #for each center word
+        cooccurrence_matrix[key] = count_occurences(text_list, key, window_size, T_list)
 
-    cooccurence_matrix = {key: [0]*len(T) for key in B} #structure to store values (for each T -> 0 vector)
-
-
-
-
-
-
-
+    return cooccurrence_matrix
 
 
 
 
 def main(arguments):
+    #Read arguments
     textfile = arguments[0]
     B = arguments[1]
     T = arguments[2]
 
     #Step 1: Preprocessing
     text_list = preprocessing(textfile)
+    T_list = preprocessing(T)
+    B_list = preprocessing(B)
     print(len(text_list))
-    #Step 2: Co-occurence matrix
-    cooccurence_matrix = TxB(textfile, B, T)
+
+    #Step 2: raw Co-occurence matrix
+    print(TxB(text_list, B_list, T_list))
+    # use PPMI scores as weights
+
+    # cooccurence_matrix = TxB(text_list, B, T)
 
 
 
