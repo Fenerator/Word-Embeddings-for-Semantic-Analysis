@@ -118,7 +118,7 @@ def main(arguments):
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, B_list, T_list)
     print(cooccurrence_matrix)
 
-    # use PPMI scores as weights
+    # use PPMI scores as weights # TODO very unsure
 
     #print(count_occurrence(text_list, T_list))
     print(T_list)
