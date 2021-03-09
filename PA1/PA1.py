@@ -4,25 +4,30 @@ import sys
 import string
 
 def preprocessing(textfile):
-    # with is like your try .. finally block in this case
+    '''
+
+    :param textfile: raw text
+    :return: preprocessed text as a list with words as elements
+    '''
     with open(textfile, 'r', encoding='utf8') as infile:
+        preprocessed_text = []
         lines = infile.readlines()
 
-    for i in lines:
-        i = i.split()
-        i = [word.lower() for word in i] #set to lowercase
-        # remove punctuation from each word
-        table = str.maketrans('', '', string.punctuation)
-        i = [word.translate(table) for word in i]
-        print(i)
+        for line in lines:
+            line = line.split()
+            line = [word.lower() for word in line] #set to lowercase
+            # remove punctuation from each word
+            table = str.maketrans('', '', string.punctuation)
+            line = [word.translate(table) for word in line]
+            preprocessed_text.append(line)
 
+    #convert preprocessed_text into a single list
+    flat_list = []
+    for sublist in preprocessed_text:
+        for item in sublist:
+            flat_list.append(item)
 
-
-
-    with open('preprocessed_file', 'w', encoding='utf8') as outfile:
-        outfile.writelines(lines)
-
-    return True
+    return flat_list
 
 
 
@@ -30,14 +35,14 @@ def preprocessing(textfile):
 
 
 def main(arguments):
-    print('Number of arguments:', len(arguments), 'arguments.')
-    print('Argument List:', arguments)
-
     textfile = arguments[0]
     B = arguments[1]
     T = arguments[2]
 
-    preprocessing(textfile)
+    #Step 1: Preprocessing
+    text_list = preprocessing(textfile)
+    print(len(text_list))
+    #Step 2:
 
 
 
