@@ -68,9 +68,15 @@ def count_cooccurences(text_list, center_word, window_size, T_list):
     return count_vector
 
 def count_occurrence(text_list, word): # P(list) for PPMI formula
+    '''
+    returns occurence/text length
+    :param text_list:
+    :param word:
+    :return:
+    '''
     # delete all words not in word_list
     cleaned_text = [x for x in text_list if x == word]
-    result = len(cleaned_text)
+    result = len(cleaned_text)/len(text_list)
 
     return result
 
@@ -91,7 +97,7 @@ def get_PPMI_values(text_list, cooccurrence_matrix,B_list, T_list):
         print('Basis: ', basis)
         for t in range(len(T_list)):  # for each T word
             print('T word: ', T_list[t])
-            PPMI_results[basis][t] = np.maximum(np.log2(cooccurrence_matrix[basis][t]/(count_occurrence(text_list, basis) * count_occurrence(text_list, T_list[t]))), 0)
+            PPMI_results[basis][t] = np.maximum(np.log2((cooccurrence_matrix[basis][t]/len(text_list))/(count_occurrence(text_list, basis) * count_occurrence(text_list, T_list[t]))), 0)
             print(cooccurrence_matrix[basis][t], '/ (', count_occurrence(text_list, basis), '*', count_occurrence(text_list, T_list[t]), ') = ', PPMI_results[basis][t], 'mit log und ohne max')
     return PPMI_results
 
@@ -112,12 +118,13 @@ def main(arguments):
     #Step 2: raw Co-occurence matrix
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, B_list, T_list)
     print('Coooccurence matrix: ', cooccurrence_matrix)
-    # use PPMI scores as weights # TODO test
+    # use PPMI scores as weights
     print('B list: ', B_list)
     print('T list: ', T_list)
 
     print('PPMI VALUES: ', get_PPMI_values(text_list, cooccurrence_matrix, B_list, T_list))
     print('Text:', text_list)
+    print('Text length: ', len(text_list))
 
 
 
