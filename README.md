@@ -7,3 +7,7 @@
 2. text file containing Basis (B) words
 3. text file containing Target (T) words
 
+Arguments are optional, default names are:
+1. 'text.txt'
+2. 'B.txt'
+3. 'T.txt'
