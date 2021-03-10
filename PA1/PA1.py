@@ -4,6 +4,12 @@ import string
 from collections import Counter
 import numpy as np
 import pandas as pd
+from collections import defaultdict
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+
 
 def preprocessing(textfile):
     '''
@@ -14,7 +20,6 @@ def preprocessing(textfile):
     with open(textfile, 'r', encoding='utf8') as infile:
         preprocessed_text = []
         lines = infile.readlines()
-
         for line in lines:
             line = line.split()
             line = [word.lower() for word in line] #set to lowercase
@@ -28,20 +33,16 @@ def preprocessing(textfile):
     for sublist in preprocessed_text:
         for item in sublist:
             flat_list.append(item)
-
     return flat_list
 
 def get_aggregated_window_text(text_list, center_word, window_size):
     border = window_size//2 # assuming uneven window_size
     center_word = center_word.lower()
-
     #get index positions of center word
     center_index = []
     for i, j in enumerate(text_list):
         if j == center_word:
             center_index.append(i)
-
-
     #get all text for center word
     center_text = []
     for el in center_index: # at each occurrence of center_word:
@@ -52,18 +53,13 @@ def get_aggregated_window_text(text_list, center_word, window_size):
 def count_cooccurences(text_list, center_word, window_size, T_list):
     counts = [0] * len(T_list)  # stores values
     center_text = get_aggregated_window_text(text_list, center_word.lower(), window_size)
-
     #delete all words not in T_list
     cleaned_center_text = [x for x in center_text if x in T_list]
-
     counts = Counter(cleaned_center_text)
-
-
     #write counts into vector (at correct position)
     count_vector = []
     for el in T_list:
         count_vector.append(counts[el])
-
 
     return count_vector
 
@@ -77,13 +73,11 @@ def count_occurrence(text_list, word): # P(list) for PPMI formula
     # delete all words not in word_list
     cleaned_text = [x for x in text_list if x == word]
     result = len(cleaned_text)/len(text_list)
-
     return result
 
 
 def get_cooccurrence_matrix(text_list, B_list, T_list):
     window_size = 5
-
     cooccurrence_matrix = {key: [0] * len(T_list) for key in B_list}  # structure to store values (for each T -> 0 vector)
     for basis in cooccurrence_matrix: #for each center word
         cooccurrence_matrix[basis] = count_cooccurences(text_list, basis, window_size, T_list)
@@ -97,8 +91,13 @@ def get_PPMI_values(text_list, cooccurrence_matrix,B_list, T_list):
         #print('Basis: ', basis)
         for t in range(len(T_list)):  # for each T word
             #print('T word: ', T_list[t])
-            PPMI_results[basis][t] = np.maximum(np.log2((cooccurrence_matrix[basis][t]/len(text_list))/(count_occurrence(text_list, basis) * count_occurrence(text_list, T_list[t]))), 0)
-            #print(cooccurrence_matrix[basis][t], '/ (', count_occurrence(text_list, basis), '*', count_occurrence(text_list, T_list[t]), ') = ', PPMI_results[basis][t], 'mit log und ohne max')
+            var = count_occurrence(text_list, basis) * count_occurrence(text_list, T_list[t])
+            if var == 0:
+                PPMI_results[basis][t] = 0
+            else:
+                with np.errstate(divide='ignore'): # suppress error when log is 0
+                    PPMI_results[basis][t] = np.maximum(np.log2((cooccurrence_matrix[basis][t]/len(text_list))/var), 0)
+
     return PPMI_results
 
 def to_df(dict, T_list):
@@ -114,14 +113,19 @@ def get_cosine_similarity(list1, list2):
     #convert to np array
     v1 = np.array(list1)
     v2 = np.array(list2)
-
     #normalize vectors
-    v1 =  v1 / np.sqrt(np.sum(v1**2))
-    v2 = v2 / np.sqrt(np.sum(v2**2))
-
+    len_v1 = np.sqrt(np.sum(v1**2))
+    len_v2 = np.sqrt(np.sum(v2**2))
+    if len_v1 == 0:
+       return 0
+    else:
+        v1 = v1 / np.sqrt(np.sum(v1 ** 2))
+    if len_v2 == 0:
+        return 0
+    else:
+        v2 = v2 / np.sqrt(np.sum(v2 ** 2))
     #calculate scalar product
     cosine_sim = np.dot(v1, v2)
-
     return cosine_sim
 
 def TxT(PPMI_df, B_list, T_list):
@@ -134,19 +138,41 @@ def TxT(PPMI_df, B_list, T_list):
         c = 0
         for j in T_list:
             matrix[key][c] = get_cosine_similarity(data[key], data[j])
-
-            print('c', c)
             c += 1
+    return matrix
 
-    return matrix # TOdo Test
-'''
-    for t in PPMI:  # for each center word
-        # print('Basis: ', basis)
-        for t in range(len(T_list)):  # for each T word
-            # print('T word: ', T_list[t])
-            PPMI[basis][t] = np.maximum(np.log2((cooccurrence_matrix[basis][t] / len(text_list)) / (
-                        count_occurrence(text_list, basis) * count_occurrence(text_list, T_list[t]))), 0)
-'''
+def hierarchical_clusters_print(feature_matrix, target_words, max_d=0.5):
+    Z_spat = linkage(feature_matrix, 'complete', 'cosine')
+    clusters = fcluster(Z_spat, max_d, criterion='distance')
+    num_clusters = len(set(clusters))
+    # Printing clusters
+    for ind in range(1, num_clusters + 1):
+        print("Cluster %d words:" % ind)
+        for i, w in enumerate(target_words):
+            if clusters[i] == ind:
+                print( ' %s' % w)
+        print()
+
+
+def kmeans_clusters_print(feature_matrix, target_words, num_clusters=5):
+    # Fitting clusters
+    km = KMeans(init='k-means++', n_clusters=num_clusters, n_init=10)
+    kmeans = km.fit(feature_matrix)
+    cluster_labels = kmeans.labels_
+    # the array of cluster labels
+    # to which each input vector in n_samples belongs
+    cluster_to_words = defaultdict(list)
+    # which word belongs to which cluster
+    for c, i in enumerate(cluster_labels):
+        cluster_to_words[i].append(target_words[c])
+    # Printing clusters
+    for i in range(num_clusters):
+        print("Cluster %d words:" % (i + 1))
+        for w in cluster_to_words[i]:
+            print(' %s' % w)
+        print()  # add whitespace
+
+
 
 
 def main(arguments):
@@ -160,37 +186,37 @@ def main(arguments):
     T_list = preprocessing(T)
     B_list = preprocessing(B)
 
-
     #Step 2: raw Co-occurence matrix
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, B_list, T_list)
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, cooccurrence_matrix, B_list, T_list)
+    print('PPMIIIII: ', PPMI)
     PPMI_df = to_df(PPMI, T_list)
     print('PPMI DF', PPMI_df)
+    PPMI_df.to_csv('PPMI_df', encoding='utf-8')
 
     #Step 3: cosine similarity matrix TxT
-    print('Cosine Similarity Matrix TxT: ', TxT(PPMI_df, B_list, T_list))
+    cos_sim_matrix = TxT(PPMI_df, B_list, T_list)
+    cos_sim_matrix_df = to_df(cos_sim_matrix, T_list)
+    print('Cosine Similarity Matrix TxT: ', cos_sim_matrix_df)
+    cos_sim_matrix_df.to_csv('cos_sim_matrix_df', encoding='utf-8')
+
+    #Step 3.1: convert cosine similarity into distance matrix using cosine distance
+    #TODO
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+    #Step 4: clustering
+    #create feature_matrix
+    feature_matrix = PPMI_df.to_numpy()
+    print('NUMPY: ', feature_matrix)
+    hierarchical_clusters_print(feature_matrix, T_list, max_d=0.5)
+    kmeans_clusters_print(feature_matrix, T_list, num_clusters=5)
 
 
 if __name__ == "__main__":
     if len(sys.argv) ==1:
         main(['text.txt', 'B.txt', 'T.txt'])
-
-       #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
+        #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
     else:
         main(sys.argv[1:])
