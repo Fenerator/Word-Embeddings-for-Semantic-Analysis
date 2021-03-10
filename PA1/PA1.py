@@ -2,6 +2,8 @@
 import sys
 import string
 from collections import Counter
+import numpy as np
+import math
 
 def preprocessing(textfile):
     '''
@@ -67,11 +69,8 @@ def count_cooccurences(text_list, center_word, window_size, T_list):
 
 def count_occurrence(text_list, word): # P(list) for PPMI formula
     # delete all words not in word_list
-    cleaned_text = [x for x in text_list if x in word]
-    print('cleaned text ', cleaned_text)
-
+    cleaned_text = [x for x in text_list if x == word]
     result = len(cleaned_text)
-
 
     return result
 
@@ -85,19 +84,15 @@ def get_cooccurrence_matrix(text_list, B_list, T_list):
     print('CO Occurence matrix ', cooccurrence_matrix)
     return cooccurrence_matrix
 
-def get_PPMI_values(text_list, cooccurrence_matrix, T_list):
-    PPMI_results = {}
-    counter = 0
-    for basis in cooccurrence_matrix:
-        print(cooccurrence_matrix[basis])
-        for t in cooccurrence_matrix[basis]:
-            print('coocurence value: ', t)
-            print('c: ', counter)
-            print(count_occurrence(text_list, T_list[counter]))
-        counter += 1
-
-
-
+def get_PPMI_values(text_list, cooccurrence_matrix,B_list, T_list):
+    PPMI_results = {key: [0] * len(T_list) for key in B_list}
+    print('calculation: ')
+    for basis in PPMI_results:  # for each center word
+        print('Basis: ', basis)
+        for t in range(len(T_list)):  # for each T word
+            print('T word: ', T_list[t])
+            PPMI_results[basis][t] = np.maximum(np.log2(cooccurrence_matrix[basis][t]/(count_occurrence(text_list, basis) * count_occurrence(text_list, T_list[t]))), 0)
+            print(cooccurrence_matrix[basis][t], '/ (', count_occurrence(text_list, basis), '*', count_occurrence(text_list, T_list[t]), ') = ', PPMI_results[basis][t], 'mit log und ohne max')
     return PPMI_results
 
 
@@ -116,14 +111,13 @@ def main(arguments):
 
     #Step 2: raw Co-occurence matrix
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, B_list, T_list)
-    print(cooccurrence_matrix)
+    print('Coooccurence matrix: ', cooccurrence_matrix)
+    # use PPMI scores as weights # TODO test
+    print('B list: ', B_list)
+    print('T list: ', T_list)
 
-    # use PPMI scores as weights # TODO very unsure
-
-    #print(count_occurrence(text_list, T_list))
-    print(T_list)
-    print(get_PPMI_values(text_list, cooccurrence_matrix,T_list))
-
+    print('PPMI VALUES: ', get_PPMI_values(text_list, cooccurrence_matrix, B_list, T_list))
+    print('Text:', text_list)
 
 
 
