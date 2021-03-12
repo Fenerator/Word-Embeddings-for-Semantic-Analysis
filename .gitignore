@@ -125,3 +125,11 @@ dmypy.json
 
 *.txt
 
+
+PA1/cos_dist_matrix_df
+
+PA1/cos_sim_matrix_df
+
+PA1/PPMI_df
+
+PA1/preprocessed_file
