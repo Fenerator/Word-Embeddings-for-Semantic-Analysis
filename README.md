@@ -8,6 +8,6 @@
 3. text file containing Target (T) words
 
 Arguments are optional, default names are:
-1. 'text.txt'
+1. 'text.txt' (a text containing President Obama's speeches)
 2. 'B.txt'
 3. 'T.txt'

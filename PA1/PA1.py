@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
 import string
 from collections import Counter
@@ -128,8 +130,6 @@ def get_cosine_similarity(list1, list2):
     cosine_sim = np.dot(v1, v2)
     return cosine_sim
 
-def convert_sim_to_dist(cos_sim_matrix):
-    ...
 
 def TxT(PPMI_df, B_list, T_list):
     #convert into row vectors (T), elements are basis
@@ -145,8 +145,17 @@ def TxT(PPMI_df, B_list, T_list):
     return matrix
 
 
+def convert_sim_to_dist(cos_sim_matrix, T_list):
+    dist_matrix = {key: [0] * len(T_list) for key in T_list}
+    # iterate through all cells:
+    for key in dist_matrix:
+        c = 0
+        for j in T_list:
+            dist_matrix[key][c] = 1-cos_sim_matrix[key][c]
+            c += 1
+    return dist_matrix
 
-
+#______________________________________________________________________________
 def hierarchical_clusters_print(feature_matrix, target_words, max_d=0.5):
     Z_spat = linkage(feature_matrix, 'complete', 'cosine')
     clusters = fcluster(Z_spat, max_d, criterion='distance')
@@ -197,7 +206,7 @@ def main(arguments):
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, cooccurrence_matrix, B_list, T_list)
     PPMI_df = to_df(PPMI, T_list)
-    print('PPMI Cooccurence matrix', PPMI_df)
+    print('Cooccurence matrix (PPMI weighted)', PPMI_df)
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
 
     #Step 3: cosine similarity matrix TxT
@@ -207,10 +216,10 @@ def main(arguments):
     cos_sim_matrix_df.to_csv('cos_sim_matrix_df', encoding='utf-8')
 
     #Step 3.1: convert cosine similarity into distance matrix using cosine distance
-    cosine_dist_matrix = convert_sim_to_dist(cos_sim_matrix)
-
-
-
+    cos_dist_matrix = convert_sim_to_dist(cos_sim_matrix, T_list)
+    cos_dist_matrix_df = to_df(cos_dist_matrix, T_list)
+    print('Cosine Distance Matrix TxT: ', cos_dist_matrix_df)
+    cos_dist_matrix_df.to_csv('cos_dist_matrix_df', encoding='utf-8')
 
     #Step 4: clustering
     #create feature_matrix
