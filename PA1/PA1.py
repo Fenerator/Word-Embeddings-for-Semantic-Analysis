@@ -128,6 +128,9 @@ def get_cosine_similarity(list1, list2):
     cosine_sim = np.dot(v1, v2)
     return cosine_sim
 
+def convert_sim_to_dist(cos_sim_matrix):
+    ...
+
 def TxT(PPMI_df, B_list, T_list):
     #convert into row vectors (T), elements are basis
     data = get_row_vector(PPMI_df) #dict keys are T, values is list of element values
@@ -140,6 +143,9 @@ def TxT(PPMI_df, B_list, T_list):
             matrix[key][c] = get_cosine_similarity(data[key], data[j])
             c += 1
     return matrix
+
+
+
 
 def hierarchical_clusters_print(feature_matrix, target_words, max_d=0.5):
     Z_spat = linkage(feature_matrix, 'complete', 'cosine')
@@ -190,9 +196,8 @@ def main(arguments):
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, B_list, T_list)
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, cooccurrence_matrix, B_list, T_list)
-    print('PPMIIIII: ', PPMI)
     PPMI_df = to_df(PPMI, T_list)
-    print('PPMI DF', PPMI_df)
+    print('PPMI Cooccurence matrix', PPMI_df)
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
 
     #Step 3: cosine similarity matrix TxT
@@ -202,14 +207,14 @@ def main(arguments):
     cos_sim_matrix_df.to_csv('cos_sim_matrix_df', encoding='utf-8')
 
     #Step 3.1: convert cosine similarity into distance matrix using cosine distance
-    #TODO
+    cosine_dist_matrix = convert_sim_to_dist(cos_sim_matrix)
+
 
 
 
     #Step 4: clustering
     #create feature_matrix
     feature_matrix = PPMI_df.to_numpy()
-    print('NUMPY: ', feature_matrix)
     hierarchical_clusters_print(feature_matrix, T_list, max_d=0.5)
     kmeans_clusters_print(feature_matrix, T_list, num_clusters=5)
 
