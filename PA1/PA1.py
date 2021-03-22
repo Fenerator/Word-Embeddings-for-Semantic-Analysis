@@ -12,13 +12,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
-
 def preprocessing(textfile):
-    '''
-
-    :param textfile: raw text
-    :return: preprocessed text as a list with words as elements
-    '''
     with open(textfile, 'r', encoding='utf8') as infile:
         preprocessed_text = []
         lines = infile.readlines()
@@ -71,8 +65,6 @@ def count_cooccurences(text_list, center_word, window_size, context_words_list):
         count_vector.append(counts[el])
     return count_vector
 
-
-
 def get_sums(Co_occurence_df, axis):
     """Replaces func count_occurrence"""
     # axis = 0 -> center sum
@@ -82,7 +74,6 @@ def get_sums(Co_occurence_df, axis):
         return center_sums
     else:
         return None
-
 
 def get_cooccurrence_matrix(text_list, center_words_list, context_words_list, window_size):
     cooccurrence_matrix = {key: [0] * len(context_words_list) for key in center_words_list}  # structure to store values (for each center word -> 0 vector of length context_word_list)
@@ -139,7 +130,6 @@ def get_cosine_similarity(list1, list2):
     cosine_sim = np.dot(v1, v2)
     return cosine_sim
 
-
 def TxT(PPMI_df, context_words_list):
     #convert into row vectors (T), elements are basis
     data = get_row_vector(PPMI_df) #dict keys are context words, values is list of PPMI values for each center word
@@ -152,7 +142,6 @@ def TxT(PPMI_df, context_words_list):
             matrix[key][c] = get_cosine_similarity(data[key], data[j])
             c += 1
     return matrix
-
 
 def convert_sim_to_dist(cos_sim_matrix, context_words_list):
     dist_matrix = {key: [0] * len(context_words_list) for key in context_words_list}
@@ -177,7 +166,6 @@ def hierarchical_clusters_print(feature_matrix, target_words, max_d=0.5):
                 print( ' %s' % w)
         print()
 
-
 def kmeans_clusters_print(feature_matrix, target_words, num_clusters=5):
     # Fitting clusters
     km = KMeans(init='k-means++', n_clusters=num_clusters, n_init=10)
@@ -195,8 +183,6 @@ def kmeans_clusters_print(feature_matrix, target_words, num_clusters=5):
         for w in cluster_to_words[i]:
             print(' %s' % w)
         print()  # add whitespace
-
-
 
 
 def main(arguments):
