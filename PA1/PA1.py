@@ -31,7 +31,6 @@ def preprocessing(textfile):
     for sublist in preprocessed_text:
         for item in sublist:
             flat_list.append(item)
-    print(flat_list)
     return flat_list
 
 def get_aggregated_window_text(text_list, center_word, window_size):
@@ -97,7 +96,6 @@ def get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words
             else:
                 with np.errstate(divide='ignore'): # suppress error when log is 0
                     PPMI_results[center_words_list[cent_ind]][cont_index] = np.maximum(np.log2((Co_occurence_df.iat[cont_index, cent_ind] / len(text_list)) / var), 0)
-                    #print('Calculation: ', 'Center ', center_words_list[cent_ind], 'Context: ', context_words_list[cont_index], 'Oben: ', Co_occurence_df.iat[cont_index, cent_ind], '/', len(text_list), 'Unten: ', center_sums[cent_ind] ,'*', context_sums[cont_index])
 
     return PPMI_results
 
@@ -108,8 +106,6 @@ def to_df(dict, context_words_list):
 
 def get_row_vector(df):
     d = df.to_dict(orient='list')
-    #d = df.T.to_dict(orient='list')
-    #print('get row vector', d)
     return d
 
 def get_cosine_similarity(list1, list2):
@@ -135,7 +131,6 @@ def TxT(PPMI_df, center_words_list):
     #convert into row vectors (T), elements are basis
     # NEW convert into row vectors
     data = get_row_vector(PPMI_df) #dict keys are CENTER words, values are word embeddings [context1, context2, context3]
-    print('Data:' ,data)
     matrix = {key: [0] * len(center_words_list) for key in center_words_list} #key is center word
     #iterate through all cells of matrix:
     for center in matrix:
@@ -204,7 +199,7 @@ def main(arguments):
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, center_words_list, context_words_list, window_size)
     Co_occurence_df = to_df(cooccurrence_matrix, context_words_list)
     Co_occurence_df.to_csv('Co_occurence_df', encoding='utf-8')
-    print('Cooccurence matrix', Co_occurence_df.round(2).transpose())  # transposing seems nec. acc. to req.
+    #print('Cooccurence matrix', Co_occurence_df.round(2).transpose())  # transposing seems nec. acc. to req.
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words_list)
     PPMI_df = to_df(PPMI, context_words_list)
