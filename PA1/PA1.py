@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
-#Francesco
-=======
 
->>>>>>> main
 import sys
 import string
 from collections import Counter
