@@ -48,10 +48,15 @@ def get_aggregated_window_text(text_list, center_word, window_size):
             center_index.append(i)
     #get all text for center word
     center_text = []
-    #no exceptions neccessary, we are using list slicing #TODO schreibe beweis an EMMA
+
     for el in center_index: # at each occurrence of center_word:
-        center_text.extend(text_list[el-border:el]) #lower boundary
+        if el-border<0:
+            center_text.extend(text_list[0:el])  # if lower boundary is negative
+        else:
+            center_text.extend(text_list[el-border:el]) #lower boundary
+
         center_text.extend(text_list[el+1:el+border+1]) # upper boundary
+
     return center_text
 
 def count_cooccurences(text_list, center_word, window_size, context_words_list):
@@ -241,7 +246,7 @@ def main(arguments):
 
 if __name__ == "__main__":
     if len(sys.argv) ==1:
-        #main(['text.txt', 'B.txt', 'T.txt']) # B = context words, T = center words
-        main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
+        main(['text.txt', 'B.txt', 'T.txt']) # B = context words, T = center words
+        #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
     else:
         main(sys.argv[1:])
