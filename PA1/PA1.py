@@ -218,7 +218,6 @@ def main(arguments):
     Co_occurence_df = to_df(cooccurrence_matrix, context_words_list)
     Co_occurence_df.to_csv('Co_occurence_df', encoding='utf-8')
     print('Cooccurence matrix', Co_occurence_df.round(2))
-
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words_list)
     PPMI_df = to_df(PPMI, context_words_list)
@@ -238,11 +237,9 @@ def main(arguments):
     cos_dist_matrix_df.to_csv('cos_dist_matrix_df', encoding='utf-8')
 
     #Step 4: clustering
-    #create feature_matrix
-    feature_matrix = PPMI_df.to_numpy()
+    feature_matrix = PPMI_df.to_numpy() #create feature_matrix
     hierarchical_clusters_print(feature_matrix, context_words_list, max_d=0.5)
     kmeans_clusters_print(feature_matrix, context_words_list, num_clusters=2)
-
 
 if __name__ == "__main__":
     if len(sys.argv) ==1:
@@ -250,4 +247,3 @@ if __name__ == "__main__":
         #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
     else:
         main(sys.argv[1:])
-
