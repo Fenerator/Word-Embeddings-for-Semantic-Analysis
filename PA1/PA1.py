@@ -250,3 +250,4 @@ if __name__ == "__main__":
         #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
     else:
         main(sys.argv[1:])
+
