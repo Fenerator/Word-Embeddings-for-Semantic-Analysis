@@ -226,7 +226,7 @@ def main(arguments):
     #Step 4: clustering
     feature_matrix = PPMI_df.transpose().to_numpy() #create feature_matrix
     hierarchical_clusters_print(feature_matrix, center_words_list, max_d=0.5)
-    kmeans_clusters_print(feature_matrix, center_words_list, num_clusters=5)
+    kmeans_clusters_print(feature_matrix, center_words_list, num_clusters=3)
 
 if __name__ == "__main__":
     if len(sys.argv) ==1:
