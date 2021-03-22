@@ -22,6 +22,8 @@ def preprocessing(textfile):
             # remove punctuation from each word
             table = str.maketrans('', '', string.punctuation)
             line = [word.translate(table) for word in line]
+            #remove empty elements
+            line = [word for word in line if word]
             preprocessed_text.append(line)
 
     #convert preprocessed_text into a single list
@@ -29,37 +31,35 @@ def preprocessing(textfile):
     for sublist in preprocessed_text:
         for item in sublist:
             flat_list.append(item)
-
+    print(flat_list)
     return flat_list
 
 def get_aggregated_window_text(text_list, center_word, window_size):
     border = window_size//2 # assuming uneven window_size
-    center_word = center_word.lower()
     #get index positions of center word
     center_index = []
     for i, j in enumerate(text_list):
         if j == center_word:
             center_index.append(i)
-    #get all text for center word
-    center_text = []
-
+    #get window text for a center word
+    window_text = []
     for el in center_index: # at each occurrence of center_word:
         if el-border<0:
-            center_text.extend(text_list[0:el])  # if lower boundary is negative
+            window_text.extend(text_list[0:el])  # if lower boundary is negative
         else:
-            center_text.extend(text_list[el-border:el]) #lower boundary
+            window_text.extend(text_list[el-border:el]) # add left window text
 
-        center_text.extend(text_list[el+1:el+border+1]) # upper boundary
+        window_text.extend(text_list[el+1:el+border+1]) # add right window text, always
 
-    return center_text
+    return window_text
 
 def count_cooccurences(text_list, center_word, window_size, context_words_list):
     counts = [0] * len(context_words_list)  # stores values for each context word
-    center_text = get_aggregated_window_text(text_list, center_word.lower(), window_size)
-    #delete all words not in context_words_list:
-    cleaned_center_text = [x for x in center_text if x in context_words_list]
-    counts = Counter(cleaned_center_text)
-    #write counts into vector (at correct position)
+    window_text = get_aggregated_window_text(text_list, center_word, window_size)
+    # keep only words in context_words_list:
+    cleaned_window_text = [x for x in window_text if x in context_words_list]
+    counts = Counter(cleaned_window_text)
+    #write counts into embedding vector (at correct position), having dimension of context words
     count_vector = []
     for el in context_words_list:
         count_vector.append(counts[el])
@@ -107,8 +107,9 @@ def to_df(dict, context_words_list):
     return df
 
 def get_row_vector(df):
-    d = df.T.to_dict(orient='list')
-    print('get row vector', d)
+    d = df.to_dict(orient='list')
+    #d = df.T.to_dict(orient='list')
+    #print('get row vector', d)
     return d
 
 def get_cosine_similarity(list1, list2):
@@ -130,25 +131,26 @@ def get_cosine_similarity(list1, list2):
     cosine_sim = np.dot(v1, v2)
     return cosine_sim
 
-def TxT(PPMI_df, context_words_list):
+def TxT(PPMI_df, center_words_list):
     #convert into row vectors (T), elements are basis
-    data = get_row_vector(PPMI_df) #dict keys are context words, values is list of PPMI values for each center word
+    # NEW convert into row vectors
+    data = get_row_vector(PPMI_df) #dict keys are CENTER words, values are word embeddings [context1, context2, context3]
     print('Data:' ,data)
-    matrix = {key: [0] * len(context_words_list) for key in context_words_list}
-    #iterate through all cells:
-    for key in matrix:
+    matrix = {key: [0] * len(center_words_list) for key in center_words_list} #key is center word
+    #iterate through all cells of matrix:
+    for center in matrix:
         c = 0
-        for j in context_words_list:
-            matrix[key][c] = get_cosine_similarity(data[key], data[j])
+        for j in center_words_list:
+            matrix[center][c] = get_cosine_similarity(data[center], data[j])
             c += 1
     return matrix
 
-def convert_sim_to_dist(cos_sim_matrix, context_words_list):
-    dist_matrix = {key: [0] * len(context_words_list) for key in context_words_list}
+def convert_sim_to_dist(cos_sim_matrix, center_words_list):
+    dist_matrix = {key: [0] * len(center_words_list) for key in center_words_list}
     # iterate through all cells:
     for key in dist_matrix:
         c = 0
-        for j in context_words_list:
+        for j in center_words_list:
             dist_matrix[key][c] = 1-cos_sim_matrix[key][c]
             c += 1
     return dist_matrix
@@ -194,38 +196,37 @@ def main(arguments):
     #Step 1: Preprocessing
     text_list = preprocessing(textfile)
     #Switch Variable Names
-    center_words_list = preprocessing(T) #center words ehem. B_list
-    context_words_list = preprocessing(B) #context words, ehem T_list
-    #B_list neu center_words_list
-    #T_list neu context_words_list
+    center_words_list = preprocessing(T) #center words, ehem. B_list, same as Target Words
+    context_words_list = preprocessing(B) #context words, ehem. T_list
+
     #Step 2: raw Co-occurence matrix
     window_size = 5
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, center_words_list, context_words_list, window_size)
     Co_occurence_df = to_df(cooccurrence_matrix, context_words_list)
     Co_occurence_df.to_csv('Co_occurence_df', encoding='utf-8')
-    print('Cooccurence matrix', Co_occurence_df.round(2))
+    print('Cooccurence matrix', Co_occurence_df.round(2).transpose())  # transposing seems nec. acc. to req.
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words_list)
     PPMI_df = to_df(PPMI, context_words_list)
-    print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2))
+    print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
 
-    #Step 3: cosine similarity matrix for context words
-    cos_sim_matrix = TxT(PPMI_df, context_words_list)
-    cos_sim_matrix_df = to_df(cos_sim_matrix, context_words_list)
+    #Step 3: cosine similarity matrix for CENTER/TARGET words, before for Context words
+    cos_sim_matrix = TxT(PPMI_df, center_words_list)
+    cos_sim_matrix_df = to_df(cos_sim_matrix, center_words_list)
     print('Cosine Similarity Matrix TxT: ', cos_sim_matrix_df.round(2))
     cos_sim_matrix_df.to_csv('cos_sim_matrix_df', encoding='utf-8')
 
     #Step 3.1: convert cosine similarity into distance matrix using cosine distance
-    cos_dist_matrix = convert_sim_to_dist(cos_sim_matrix, context_words_list)
-    cos_dist_matrix_df = to_df(cos_dist_matrix, context_words_list)
+    cos_dist_matrix = convert_sim_to_dist(cos_sim_matrix, center_words_list)
+    cos_dist_matrix_df = to_df(cos_dist_matrix, center_words_list)
     print('Cosine Distance Matrix TxT: ', cos_dist_matrix_df.round(2))
     cos_dist_matrix_df.to_csv('cos_dist_matrix_df', encoding='utf-8')
 
     #Step 4: clustering
-    feature_matrix = PPMI_df.to_numpy() #create feature_matrix
-    hierarchical_clusters_print(feature_matrix, context_words_list, max_d=0.5)
-    kmeans_clusters_print(feature_matrix, context_words_list, num_clusters=5)
+    feature_matrix = PPMI_df.transpose().to_numpy() #create feature_matrix
+    hierarchical_clusters_print(feature_matrix, center_words_list, max_d=0.5)
+    kmeans_clusters_print(feature_matrix, center_words_list, num_clusters=5)
 
 if __name__ == "__main__":
     if len(sys.argv) ==1:
