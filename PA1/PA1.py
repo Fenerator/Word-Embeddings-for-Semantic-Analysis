@@ -35,6 +35,7 @@ def preprocessing(textfile):
     for sublist in preprocessed_text:
         for item in sublist:
             flat_list.append(item)
+
     return flat_list
 
 def get_aggregated_window_text(text_list, center_word, window_size):
@@ -225,11 +226,12 @@ def main(arguments):
     #create feature_matrix
     feature_matrix = PPMI_df.to_numpy()
     hierarchical_clusters_print(feature_matrix, T_list, max_d=0.5)
-    kmeans_clusters_print(feature_matrix, T_list, num_clusters=5)
+    kmeans_clusters_print(feature_matrix, T_list, num_clusters=2)
 
 
 if __name__ == "__main__":
     if len(sys.argv) ==1:
-        main(['text.txt', 'B.txt', 'T.txt'])
+        main(['text.txt', 'B.txt', 'T.txt']) # B = context words, T = center words
+        #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
     else:
         main(sys.argv[1:])
