@@ -34,32 +34,30 @@ def preprocessing(textfile):
 
 def get_aggregated_window_text(text_list, center_word, window_size):
     border = window_size//2 # assuming uneven window_size
-    center_word = center_word.lower()
     #get index positions of center word
     center_index = []
     for i, j in enumerate(text_list):
         if j == center_word:
             center_index.append(i)
-    #get all text for center word
-    center_text = []
-
+    #get window text for a center word
+    window_text = []
     for el in center_index: # at each occurrence of center_word:
         if el-border<0:
-            center_text.extend(text_list[0:el])  # if lower boundary is negative
+            window_text.extend(text_list[0:el])  # if lower boundary is negative
         else:
-            center_text.extend(text_list[el-border:el]) #lower boundary
+            window_text.extend(text_list[el-border:el]) # add left window text
 
-        center_text.extend(text_list[el+1:el+border+1]) # upper boundary
+        window_text.extend(text_list[el+1:el+border+1]) # add right window text, always
 
-    return center_text
+    return window_text
 
 def count_cooccurences(text_list, center_word, window_size, context_words_list):
     counts = [0] * len(context_words_list)  # stores values for each context word
-    center_text = get_aggregated_window_text(text_list, center_word.lower(), window_size)
-    #delete all words not in context_words_list:
-    cleaned_center_text = [x for x in center_text if x in context_words_list]
-    counts = Counter(cleaned_center_text)
-    #write counts into vector (at correct position)
+    window_text = get_aggregated_window_text(text_list, center_word, window_size)
+    # keep only words in context_words_list:
+    cleaned_window_text = [x for x in window_text if x in context_words_list]
+    counts = Counter(cleaned_window_text)
+    #write counts into embedding vector (at correct position), having dimension of context words
     count_vector = []
     for el in context_words_list:
         count_vector.append(counts[el])
@@ -194,23 +192,22 @@ def main(arguments):
     #Step 1: Preprocessing
     text_list = preprocessing(textfile)
     #Switch Variable Names
-    center_words_list = preprocessing(T) #center words ehem. B_list
-    context_words_list = preprocessing(B) #context words, ehem T_list
-    #B_list neu center_words_list
-    #T_list neu context_words_list
+    center_words_list = preprocessing(T) #center words, ehem. B_list, same as Target Words
+    context_words_list = preprocessing(B) #context words, ehem. T_list
+
     #Step 2: raw Co-occurence matrix
     window_size = 5
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, center_words_list, context_words_list, window_size)
     Co_occurence_df = to_df(cooccurrence_matrix, context_words_list)
     Co_occurence_df.to_csv('Co_occurence_df', encoding='utf-8')
-    print('Cooccurence matrix', Co_occurence_df.round(2))
+    print('Cooccurence matrix', Co_occurence_df.round(2).transpose())  # transposing seems nec. acc. to req.
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words_list)
     PPMI_df = to_df(PPMI, context_words_list)
-    print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2))
+    print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
 
-    #Step 3: cosine similarity matrix for context words
+    #Step 3: cosine similarity matrix for CENTER/TARGET words
     cos_sim_matrix = TxT(PPMI_df, context_words_list)
     cos_sim_matrix_df = to_df(cos_sim_matrix, context_words_list)
     print('Cosine Similarity Matrix TxT: ', cos_sim_matrix_df.round(2))
@@ -229,7 +226,7 @@ def main(arguments):
 
 if __name__ == "__main__":
     if len(sys.argv) ==1:
-        #main(['text.txt', 'B.txt', 'T.txt']) # B = context words, T = center words
-        main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
+        main(['text.txt', 'B.txt', 'T.txt']) # B = context words, T = center words
+        #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt'])
     else:
         main(sys.argv[1:])
