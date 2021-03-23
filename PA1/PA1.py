@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 import sys
 import string
 from collections import Counter
@@ -96,7 +95,6 @@ def get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words
             else:
                 with np.errstate(divide='ignore'): # suppress error when log is 0
                     PPMI_results[center_words_list[cent_ind]][cont_index] = np.maximum(np.log2((Co_occurence_df.iat[cont_index, cent_ind] / len(text_list)) / var), 0)
-
     return PPMI_results
 
 def to_df(dict, context_words_list):
@@ -150,7 +148,6 @@ def convert_sim_to_dist(cos_sim_matrix, center_words_list):
             c += 1
     return dist_matrix
 
-#______________________________________________________________________________
 def hierarchical_clusters_print(feature_matrix, target_words, max_d=0.5):
     Z_spat = linkage(feature_matrix, 'complete', 'cosine')
     clusters = fcluster(Z_spat, max_d, criterion='distance')
