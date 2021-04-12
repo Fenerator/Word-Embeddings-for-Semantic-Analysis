@@ -43,22 +43,32 @@ def decision_boundary(x): # needed later to compare whether output == label
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+
+def unit_step(x):
+    return 1.0* (x>=0)  # returns 1 if x >=0
+
 for i in range(100000):
     error_count=0
     for point, label in training_set:
-        result = sigmoid(np.dot(point, weights))
+        dot_product = np.dot(point, weights)
+        result_sigmoid = sigmoid(dot_product)
+        result = unit_step(dot_product)
         #print("input:",input, "output:",result, 'Label: ', desired_out, "Correctly Classified: ", decision_boundary(result) == desired_out)
         #print("output result:", result, 'Label: ', label, "Correctly Classified: ", decision_boundary(result) == label)
-        error = label - result
+        error = label - result_sigmoid
         #print('Error ', error)
-        if abs(error) > 0.005:
+        if label !=result:
             error_count+=1
             for i,val in enumerate(point):
                 weights[i]+= val * error * learning_rate
-        print('Nr. of errors in this iteration: ', error_count)
+    print('Nr. of errors in this iteration: ', error_count)
     # Stopping Criterion
     if error_count==0:
         print("#" * 60)
+        print('Nr of iterations: ', i)
         print('Weights: ', weights)
         print("#" * 60)
         break
+
+
+
