@@ -36,13 +36,11 @@ points = df.values.tolist()
 training_set = list(zip(points, labels))
 weights = [0.0] * len(points[0]) # initialize weights with 0
 
-
 def decision_boundary(x): # needed later to compare whether output == label
     return 1.0* (x>=0.005)
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
-
 
 def unit_step(x):
     return 1.0* (x>0)  # returns 1 if x >0
@@ -81,4 +79,3 @@ with open('weights_pa2.txt', 'w', encoding='utf8') as f:
     for el in weights:
         f.write(str(el))
         f.write('\n')
-
