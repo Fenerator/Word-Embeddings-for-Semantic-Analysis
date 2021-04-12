@@ -14,7 +14,7 @@ weights = [0.0,0.0,0.0]
 
 
 def unit_step(x):
-    return 1.0* (x>=0)  # returns 1 if x >=0
+    return 1.0* (x>0)  # returns 1 if x >=0
 
 def decision_boundary(x):
     return 1.0* (x>=0.005)

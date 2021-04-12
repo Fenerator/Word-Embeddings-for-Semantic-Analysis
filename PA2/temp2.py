@@ -37,3 +37,5 @@ print(len(labels))
 
 print(len(points[0]))
 
+def test(x):
+    return x >0

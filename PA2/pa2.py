@@ -45,30 +45,40 @@ def sigmoid(x):
 
 
 def unit_step(x):
-    return 1.0* (x>=0)  # returns 1 if x >=0
+    return 1.0* (x>0)  # returns 1 if x >0
 
-for i in range(100000):
+def predict(point, weights):
+    #dot product of all but last column + identity of last weight
+    return unit_step(np.dot(point[:-1], weights[:-1]) + weights[-1])
+
+for iteration in range(10000):
     error_count=0
     for point, label in training_set:
         dot_product = np.dot(point, weights)
         result_sigmoid = sigmoid(dot_product)
-        result = unit_step(dot_product)
+        prediction = predict(point, weights)
         #print("input:",input, "output:",result, 'Label: ', desired_out, "Correctly Classified: ", decision_boundary(result) == desired_out)
         #print("output result:", result, 'Label: ', label, "Correctly Classified: ", decision_boundary(result) == label)
         error = label - result_sigmoid
         #print('Error ', error)
-        if label !=result:
-            error_count+=1
+        if label !=prediction:
+            error_count+=1 # count nr. of incorrectly predicted points
             for i,val in enumerate(point):
                 weights[i]+= val * error * learning_rate
-    print('Nr. of errors in this iteration: ', error_count)
+
+    print('Nr. of errors in this iteration: ', error_count, iteration)
+
     # Stopping Criterion
     if error_count==0:
         print("#" * 60)
-        print('Nr of iterations: ', i)
+        print('Nr of iterations: ', iteration)
         print('Weights: ', weights)
         print("#" * 60)
         break
 
-
+# write weights into txt file
+with open('weights_pa2.txt', 'w', encoding='utf8') as f:
+    for el in weights:
+        f.write(str(el))
+        f.write('\n')
 
