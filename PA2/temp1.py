@@ -1,3 +1,5 @@
+#perceptron algo
+
 import numpy as np
 
 # Parameters
