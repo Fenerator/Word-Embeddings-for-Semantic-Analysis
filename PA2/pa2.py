@@ -36,7 +36,7 @@ points = df.values.tolist()
 training_set = list(zip(points, labels))
 weights = [0.0] * len(points[0]) # initialize weights with 0
 
-def decision_boundary(x): # needed later to compare whether output == label
+def decision_boundary(x): # needed later to compare whether output == label # TODO can be deleted
     return 1.0* (x>=0.005)
 
 def sigmoid(x):
