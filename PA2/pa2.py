@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+'''
+Due to use of bias input, last element in weights_pa2.txt is the bias (and not actually a weight).
+'''
 import numpy as np
 import pandas as pd
 
