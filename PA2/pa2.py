@@ -34,12 +34,8 @@ df['bias'] = bias
 #create vector from row of df including bias term
 points = df.values.tolist()
 
-#create datastructure [([point coordinates], label), ...]
-training_set = list(zip(points, labels))
+training_set = list(zip(points, labels)) #create datastructure [([point coordinates], label), ...]
 weights = [0.0] * len(points[0]) # initialize weight vector with 0
-
-def decision_boundary(x): # needed later to compare whether output == label # TODO can be deleted
-    return 1.0* (x>=0.005)
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -48,7 +44,12 @@ def unit_step(x):
     return 1.0* (x>0)  # returns 1 if x >0
 
 def predict(point, weights):
-    #dot product of all but last column + identity of last weight
+    '''
+    retruns dot product of all but last column + identity of last weight
+    :param point: list cont. coordinates
+    :param weights: list of weight values
+    :return: prediction (0 or 1)
+    '''
     return unit_step(np.dot(point[:-1], weights[:-1]) + weights[-1])
 
 for iteration in range(10000):
@@ -56,28 +57,28 @@ for iteration in range(10000):
     for point, label in training_set:
         dot_product = np.dot(point, weights)
         result_sigmoid = sigmoid(dot_product)
-        prediction = predict(point, weights)
+        prediction = predict(point, weights) # prediction of classifier
         #print("input:",input, "output:",result, 'Label: ', desired_out, "Correctly Classified: ", decision_boundary(result) == desired_out)
         #print("output result:", result, 'Label: ', label, "Correctly Classified: ", decision_boundary(result) == label)
         error = label - result_sigmoid
-        #print('Error ', error)
         if label !=prediction:
             error_count+=1 # count nr. of incorrectly predicted points
+            # Weight update
             for i,val in enumerate(point):
-                weights[i]+= val * error * learning_rate
+                weights[i] += val * error * learning_rate
 
-    print('Nr. of errors in this iteration: ', error_count, iteration)
+    print('Nr. of errors in this iteration: ', error_count)
 
     # Stopping Criterion
-    if error_count==0:
+    if error_count == 0:
         print("#" * 60)
         print('Nr of iterations: ', iteration)
         print('Weights: ', weights)
         print("#" * 60)
-        break
 
-# write weights into txt file
-with open('weights_pa2.txt', 'w', encoding='utf8') as f:
-    for el in weights:
-        f.write(str(el))
-        f.write('\n')
+        # write weights into txt file
+        with open('weights_pa2.txt', 'w', encoding='utf8') as f:
+            for el in weights:
+                f.write(str(el))
+                f.write('\n')
+        break
