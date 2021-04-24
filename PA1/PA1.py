@@ -223,6 +223,7 @@ def main(arguments):
 if __name__ == "__main__":
     if len(sys.argv) ==1:
         #main(['text.txt', 'B.txt', 'T.txt'])
-        main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt']) # B = context words, T = center words
+        #main(['text_V2.txt', 'B_V2.txt', 'T_V2.txt']) # B = context words, T = center words
+        main(['filesPA3/pa3_input_text.txt', 'filesPA3/pa3_B.txt', 'filesPA3/pa3_T2.txt'])
     else:
         main(sys.argv[1:])

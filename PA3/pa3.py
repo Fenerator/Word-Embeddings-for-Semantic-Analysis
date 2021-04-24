@@ -23,7 +23,10 @@ def parse_args():
     return args
 
 # Code from PA1____________________________________________________________________________
-def preprocessing(textfile):
+def preprocessing(textfile, contains_labels=False):
+    if contains_labels:
+        # remove labels and ad to list:
+        ...
     with open(textfile, 'r', encoding='utf8') as infile:
         preprocessed_text = []
         lines = infile.readlines()
@@ -126,7 +129,13 @@ def get_sparse(textfile, B, T):
     # Step 1: Preprocessing
     text_list = preprocessing(textfile)
     # Switch Variable Names
+    # Cut -f1; f2 as labels in list
+
+
+
     center_words_list = preprocessing(T) # TODO needs different preprocessing method!  # center words, ehem. B_list, same as Target Words
+
+
     context_words_list = preprocessing(B)  # context words, ehem. T_list
 
     # Step 2: raw Co-occurence matrix
