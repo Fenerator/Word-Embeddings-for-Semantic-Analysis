@@ -6,6 +6,42 @@ Due to use of bias input, last element in weights_pa2.txt is bias (and not actua
 import numpy as np
 import pandas as pd
 
+# Parameters
+learning_rate = 0.2
+T = 'pa3_T.txt'
+B = 'pa3_B.txt'
+textfile = 'pa3_input_text.txt'
+
+#get labels:
+# Data: creating input format from txt file, use bias input: add 1 in last coordinate of points, and add an additional weight
+df = pd.read_csv(T, sep='\t', header=None, names=['T_Word', 'Label'])
+#create label vector
+text_labels = df['Label'].tolist()
+# encode text_labels 1 for war, 0 for peace
+labels =  []
+for el in text_labels:
+    if el == 'WAR':
+        labels.append(1)
+    elif el == 'PEACE':
+        labels.append(0)
+    else:
+        raise KeyError
+
+#add bias (1 for each last coordinate) of points
+bias = [1] * len(labels)
+df['bias'] = bias
+
+#create vector from row of df including bias term
+points = df.values.tolist()
+
+training_set = list(zip(points, labels)) #create datastructure [([point coordinates], label), ...]
+
+
+
+
+
+
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -14,88 +50,41 @@ def unit_step(x):
 
 def predict(point, weights):
     '''
-    returns dot product of all but last column + identity of last weight
+    retruns dot product of all but last column + identity of last weight
     :param point: list cont. coordinates
     :param weights: list of weight values
     :return: prediction (0 or 1)
     '''
     return unit_step(np.dot(point[:-1], weights[:-1]) + weights[-1])
 
-def get_trainingset():
-    # Data: creating input format from txt file, use bias input: add 1 in last coordinate of points, and add an additional weight
-    df = pd.read_csv('pa2_input.txt', sep='\t')
-    df = df.drop(['Word', '|'], axis=1)
+weights = [0.0] * len(points[0]) # initialize weight vector with 0
+for iteration in range(700):
+    error_count=0
+    for point, label in training_set:
+        dot_product = np.dot(point, weights)
+        result_sigmoid = sigmoid(dot_product)
+        prediction = predict(point, weights) # prediction of classifier
+        #print("input:",input, "output:",result, 'Label: ', desired_out, "Correctly Classified: ", decision_boundary(result) == desired_out)
+        #print("output result:", result, 'Label: ', label, "Correctly Classified: ", decision_boundary(result) == label)
+        error = label - result_sigmoid
+        if label !=prediction:
+            error_count+=1 # count nr. of incorrectly predicted points
+            # Weight update
+            for i,val in enumerate(point):
+                weights[i] += val * error * learning_rate
 
-    # create vector from labels
-    text_labels = df['Label'].tolist()
-    df = df.drop('Label', axis=1)
+    print('Nr. of errors in this iteration: ', error_count)
 
-    # encode text_labels 1 for war, 0 for peace
-    labels = []
-    for el in text_labels:
-        if el == 'WAR':
-            labels.append(1)
-        elif el == 'PEACE':
-            labels.append(0)
-        else:
-            raise KeyError
+    # Stopping Criterion
+    if error_count == 0:
+        print("#" * 60)
+        print('Nr of iterations: ', iteration)
+        print('Weights: ', weights)
+        print("#" * 60)
 
-    # add bias (1 for each last coordinate) of points
-    bias = [1] * len(labels)
-    df['bias'] = bias
-
-    # create vector from row of df including bias term
-    points = df.values.tolist()
-
-    training_set = list(zip(points, labels))  # create datastructure [([point coordinates], label), ...]
-    return training_set
-
-def train(textfile, training_set):
-    # Parameters
-    learning_rate = 0.2
-
-
-
-
-    weights = [0.0] * len(points[0]) # initialize weight vector with 0
-
-
-
-    for iteration in range(10000):
-        error_count=0
-        for point, label in training_set:
-            dot_product = np.dot(point, weights)
-            result_sigmoid = sigmoid(dot_product)
-            prediction = predict(point, weights) # prediction of classifier
-            #print("input:",input, "output:",result, 'Label: ', desired_out, "Correctly Classified: ", decision_boundary(result) == desired_out)
-            #print("output result:", result, 'Label: ', label, "Correctly Classified: ", decision_boundary(result) == label)
-            error = label - result_sigmoid
-            if label !=prediction:
-                error_count+=1 # count nr. of incorrectly predicted points
-                # Weight update
-                for i,val in enumerate(point):
-                    weights[i] += val * error * learning_rate
-
-        print('Nr. of errors in this iteration: ', error_count)
-
-        # Stopping Criterion
-        if error_count == 0:
-            print("#" * 60)
-            print('Nr of iterations: ', iteration)
-            print('Weights: ', weights)
-            print("#" * 60)
-
-            # write weights into txt file
-            with open('weights_pa2.txt', 'w', encoding='utf8') as f:
-                for el in weights:
-                    f.write(str(el))
-                    f.write('\n')
-            break
-
-def test():
-    ...
-
-def main():
-    training_set = get_trainingset()
-    weights = train()
-    test()
+        # write weights into txt file
+        with open('weights_pa2.txt', 'w', encoding='utf8') as f:
+            for el in weights:
+                f.write(str(el))
+                f.write('\n')
+        break

@@ -158,9 +158,10 @@ def get_sparse(textfile, B, T): # TODO get right vectors!
     # print('Cooccurence matrix', Co_occurence_df.round(2).transpose())  # transposing seems nec. acc. to req.
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words_list)
-    PPMI_df = to_df(PPMI, context_words_list)
-    print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
+    PPMI_df = to_df(PPMI, context_words_list).transpose()
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
+    #print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
+
 
     return PPMI_df
 
@@ -204,42 +205,6 @@ def get_dense(textfile, B_list):
 
 
 # CODE FROM PA2_________________________________________________________________________________________________________
-# Parameters
-learning_rate = 0.2
-
-# Get labels
-
-# Get points
-
-
-# Data: creating input format from txt file, use bias input: add 1 in last coordinate of points, and add an additional weight
-df = pd.read_csv('pa2_input.txt', sep='\t')
-df = df.drop(['Word', '|'], axis=1)
-
-#create vector from labels
-text_labels = df['Label'].tolist()
-df = df.drop('Label', axis=1)
-
-# encode text_labels 1 for war, 0 for peace
-labels =  []
-for el in text_labels:
-    if el == 'WAR':
-        labels.append(1)
-    elif el == 'PEACE':
-        labels.append(0)
-    else:
-        raise KeyError
-
-#add bias (1 for each last coordinate) of points
-bias = [1] * len(labels)
-df['bias'] = bias
-
-#create vector from row of df including bias term
-points = df.values.tolist()
-
-training_set = list(zip(points, labels)) #create datastructure [([point coordinates], label), ...]
-weights = [0.0] * len(points[0]) # initialize weight vector with 0
-
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -255,39 +220,76 @@ def predict(point, weights):
     '''
     return unit_step(np.dot(point[:-1], weights[:-1]) + weights[-1])
 
-for iteration in range(10000):
-    error_count=0
+def get_labels(T):
+    # get labels:
+    # Data: creating input format from txt file, use bias input: add 1 in last coordinate of points, and add an additional weight
+    df = pd.read_csv(T, sep='\t', header=None, names=['T_Word', 'Label'])
+    # create label vector
+    text_labels = df['Label'].tolist()
+    # encode text_labels 1 for war, 0 for peace
+    labels = []
+    for el in text_labels:
+        if el == 'WAR':
+            labels.append(1)
+        elif el == 'PEACE':
+            labels.append(0)
+        else:
+            raise KeyError
+
+    return labels
+
+def get_trainset(labels, matrix_df, get_from_row=True):
+    if get_from_row: # get row vectors containing coordinates:
+        # add bias (1 for each last coordinate) of points
+        bias = [1] * len(labels)
+        matrix_df['bias'] = bias
+        # create vector from row of df including bias term
+        points = matrix_df.values.tolist()
+        #print(points)
+    else:
+        points = matrix_df['vectors'].tolist()
+        #print('Dense Matrix list: ', matrix_df['vectors'].tolist())
+
+    # create train structure:
+    training_set = list(zip(points, labels))  # create datastructure [([point coordinates], label), ...]
+
+    return training_set
+
+
+def train(training_set):
+    learning_rate = 0.2
+    weights = [0.0] * len(training_set[0][0])  # initialize weight vector with 0
+
+    for iteration in range(700): # use as stopping criterion
+        for point, label in training_set:
+            dot_product = np.dot(point, weights)
+            result_sigmoid = sigmoid(dot_product)
+            error = label - result_sigmoid
+            if abs(error) > 0.01:
+                # Weight update
+                for i, val in enumerate(point):
+                    weights[i] += val * error * learning_rate
+
+    return weights
+
+def predict(point, weights):
+    '''
+    retruns dot product of all but last column + identity of last weight
+    :param point: list cont. coordinates
+    :param weights: list of weight values
+    :return: prediction (0 or 1)
+    '''
+    return unit_step(np.dot(point[:-1], weights[:-1]) + weights[-1])
+
+# ______________________________________________________________________________________________________________________
+def single_evaluation(training_set, weights):
+    error_count = 0
     for point, label in training_set:
-        dot_product = np.dot(point, weights)
-        result_sigmoid = sigmoid(dot_product)
-        prediction = predict(point, weights) # prediction of classifier
-        #print("input:",input, "output:",result, 'Label: ', desired_out, "Correctly Classified: ", decision_boundary(result) == desired_out)
-        #print("output result:", result, 'Label: ', label, "Correctly Classified: ", decision_boundary(result) == label)
-        error = label - result_sigmoid
+        prediction = predict(point, weights)  # prediction of classifier
         if label !=prediction:
             error_count+=1 # count nr. of incorrectly predicted points
-            # Weight update
-            for i,val in enumerate(point):
-                weights[i] += val * error * learning_rate
+    return error_count
 
-    print('Nr. of errors in this iteration: ', error_count)
-
-    # Stopping Criterion
-    if error_count == 0:
-        print("#" * 60)
-        print('Nr of iterations: ', iteration)
-        print('Weights: ', weights)
-        print("#" * 60)
-
-        # write weights into txt file
-        with open('weights_pa2.txt', 'w', encoding='utf8') as f:
-            for el in weights:
-                f.write(str(el))
-                f.write('\n')
-        break
-# ______________________________________________________________________________________________________________________
-def single_evaluation():
-    ...
 
 def cross_validation_eval():
     ...
@@ -306,13 +308,26 @@ def main():
 
     # Get sparse matrix
     sparse_matrix = get_sparse(textfile, B, T)
-
+    #print(sparse_matrix)
     T_list = preprocessing(T, contains_labels=True) # sets which vectors need to be considered in dense matrix
-    print(T_list)
+    #print(T_list)
     dense_matrix = get_dense(textfile, T_list)
     print(dense_matrix)
 
-    # classify
+    # classify sparse
+    labels = get_labels(T)
+    training_set = get_trainset(labels, sparse_matrix, get_from_row=True)
+    weights = train(training_set)
+    nr_of_errors = single_evaluation(training_set, weights)
+    print(nr_of_errors)
+
+    # classify dense #TODO check solutions of EMMA in video.
+    training_set = get_trainset(labels, dense_matrix, get_from_row=False) #get vectors from 1 cell
+    weights = train(training_set)
+    nr_of_errors = single_evaluation(training_set, weights)
+    print(nr_of_errors)
+
+
 
 
 if __name__ == "__main__":

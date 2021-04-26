@@ -200,8 +200,9 @@ def main(arguments):
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words_list)
     PPMI_df = to_df(PPMI, context_words_list)
-    print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
+    print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
+
 
     #Step 3: cosine similarity matrix for CENTER/TARGET words, before for Context words
     cos_sim_matrix = TxT(PPMI_df, center_words_list)
