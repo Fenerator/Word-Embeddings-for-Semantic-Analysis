@@ -193,12 +193,13 @@ def get_dense(textfile, B_list):
     vectors = []
     for el in B_list:
         try:
-            vectors.append(model.wv[el]) # TODO how to handle these cases? now -> 0 vector
+            vectors.append(model.wv[el].tolist()) # TODO how to handle these cases? now -> 0 vector
         except KeyError:
             print('Key Error with ', el)
-            vectors.append(83* [0])
+            vectors.append(83* [0]) # TODO get that number from somewhere
 
     # Make dataframe
+    print('Vectors: ', vectors, type(vectors[0]))
     dense_df = pd.DataFrame(list(zip(B_list, vectors)), columns=['B_list', 'vectors'])
     dense_df.to_csv('dense_df', encoding='utf-8')
     return dense_df
@@ -248,6 +249,9 @@ def get_trainset(labels, matrix_df, get_from_row=True):
         #print(points)
     else:
         points = matrix_df['vectors'].tolist()
+        # add 1 at each last coordinate
+        for point in points:
+            point.append(1)
         #print('Dense Matrix list: ', matrix_df['vectors'].tolist())
 
     # create train structure:
@@ -260,16 +264,19 @@ def train(training_set):
     learning_rate = 0.2
     weights = [0.0] * len(training_set[0][0])  # initialize weight vector with 0
 
+
     for iteration in range(700): # use as stopping criterion
         for point, label in training_set:
             dot_product = np.dot(point, weights)
             result_sigmoid = sigmoid(dot_product)
             error = label - result_sigmoid
-            if abs(error) > 0.01:
+            prediction = predict(point, weights)  # prediction of classifier
+            if label != prediction:
+            #if abs(error) > 0.01:
                 # Weight update
                 for i, val in enumerate(point):
                     weights[i] += val * error * learning_rate
-
+        #print('Errors in iteration ', iteration, ': ', single_evaluation(training_set, weights))
     return weights
 
 def predict(point, weights):
@@ -317,12 +324,14 @@ def main():
     # classify sparse
     labels = get_labels(T)
     training_set = get_trainset(labels, sparse_matrix, get_from_row=True)
+    print('trainset: ', training_set[0])
     weights = train(training_set)
     nr_of_errors = single_evaluation(training_set, weights)
     print(nr_of_errors)
 
     # classify dense #TODO check solutions of EMMA in video.
     training_set = get_trainset(labels, dense_matrix, get_from_row=False) #get vectors from 1 cell
+    print('trainset: ', training_set[0])
     weights = train(training_set)
     nr_of_errors = single_evaluation(training_set, weights)
     print(nr_of_errors)
