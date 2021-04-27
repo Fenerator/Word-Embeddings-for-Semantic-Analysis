@@ -206,8 +206,8 @@ def get_dense(textfile, B_list):
 
 
 # CODE FROM PA2_________________________________________________________________________________________________________
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+def sigmoid(a, x):
+    return 1 / (1 + np.exp(-a*x))
 
 def unit_step(x):
     return 1.0* (x>0)  # returns 1 if x >0
@@ -227,13 +227,13 @@ def get_labels(T):
     df = pd.read_csv(T, sep='\t', header=None, names=['T_Word', 'Label'])
     # create label vector
     text_labels = df['Label'].tolist()
-    # encode text_labels 1 for war, 0 for peace
+    # encode text_labels 0 for war, 1 for peace
     labels = []
     for el in text_labels:
         if el == 'WAR':
-            labels.append(1)
-        elif el == 'PEACE':
             labels.append(0)
+        elif el == 'PEACE':
+            labels.append(1)
         else:
             raise KeyError
 
@@ -262,21 +262,23 @@ def get_trainset(labels, matrix_df, get_from_row=True):
 
 def train(training_set):
     learning_rate = 0.2
+    alpha = 2
     weights = [0.0] * len(training_set[0][0])  # initialize weight vector with 0
 
 
-    for iteration in range(700): # use as stopping criterion
+    for iteration in range(100): # use as stopping criterion
         for point, label in training_set:
             dot_product = np.dot(point, weights)
-            result_sigmoid = sigmoid(dot_product)
+            result_sigmoid = sigmoid(alpha, dot_product)
             error = label - result_sigmoid
             prediction = predict(point, weights)  # prediction of classifier
-            if label != prediction:
-            #if abs(error) > 0.01:
+            if iteration == 50 or iteration == 99:
+                print(f'Iteration: {iteration} True result: {label} \t Output: {result_sigmoid}')
+            if abs(error) > 0.0:
                 # Weight update
                 for i, val in enumerate(point):
                     weights[i] += val * error * learning_rate
-        #print('Errors in iteration ', iteration, ': ', single_evaluation(training_set, weights))
+
     return weights
 
 def predict(point, weights):
