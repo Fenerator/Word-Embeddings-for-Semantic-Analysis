@@ -257,6 +257,8 @@ def get_trainset(labels, matrix_df, get_from_row=True):
     # create train structure:
     training_set = list(zip(points, labels))  # create datastructure [([point coordinates], label), ...]
 
+
+
     return training_set
 
 
@@ -264,7 +266,6 @@ def train(training_set):
     learning_rate = 0.2
     alpha = 2
     weights = [0.0] * len(training_set[0][0])  # initialize weight vector with 0
-
 
     for iteration in range(100): # use as stopping criterion
         for point, label in training_set:
@@ -298,8 +299,9 @@ def get_accuracy(training_set, weights):
         if label !=prediction:
             error_count+=1 # count nr. of incorrectly predicted points
     total = len(training_set)
-    correct = total-error_count
 
+    correct = total-error_count
+    print(f'correct/total: {correct} , {total}')
     return correct/total
 
 def single_evaluation(T, matrix, get_from_row=True):
@@ -310,8 +312,33 @@ def single_evaluation(T, matrix, get_from_row=True):
 
     return accuracy
 
-def cross_validation_eval():
-    ...
+def average(list):
+    return sum(list) / len(list)
+
+def cross_validation(T, matrix, get_from_row=True):
+    labels = get_labels(T)
+    data = get_trainset(labels, matrix, get_from_row) # whole dataset
+    len_data = len(data)
+    bin_size = len_data // 5
+    accuracies = [] # acc. per bin or fold
+    lengths = []
+    for i in range(0, len_data, bin_size):
+        train_data = data[:]  # copy all data into trainset
+        test_data = train_data[i:i+bin_size] # extract test data
+        del train_data[i:i+bin_size] # remove test data from train data
+        weights = train(train_data)
+        accuracy = get_accuracy(test_data, weights)
+        lengths.append(len(test_data))
+        accuracies.append(accuracy)
+
+    accuracies_mean = average(accuracies)
+    print(f'lengths of test set: {lengths}')
+
+    return (accuracies, accuracies_mean)
+
+
+
+
 
 def main():
     # get arguments:
@@ -336,11 +363,16 @@ def main():
     # classify sparse
     accuracy_sparse = single_evaluation(T, sparse_matrix, get_from_row=True)
     print(f'Accuracy sparse: {accuracy_sparse}')
-
+    cross_val_sparse = cross_validation(T, sparse_matrix, get_from_row=True)
+    print(f'Cross val spase: {cross_val_sparse}')
     # classify dense
     accuracy_dense = single_evaluation(T, dense_matrix, get_from_row=False)
-
     print(f' Accuracy dense {accuracy_dense}')
+    cross_val_dense = cross_validation(T, dense_matrix, get_from_row=False)
+    print(f'Cross val dense: {cross_val_dense}')
+
+
+
 
 
 
