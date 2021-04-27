@@ -8,23 +8,22 @@ import pandas as pd
 
 # Parameters
 learning_rate = 0.2
-alpha = 2
+T = 'pa3_T.txt'
+B = 'pa3_B.txt'
+textfile = 'pa3_input_text.txt'
 
+#get labels:
 # Data: creating input format from txt file, use bias input: add 1 in last coordinate of points, and add an additional weight
-df = pd.read_csv('pa2_input.txt', sep='\t')
-df = df.drop(['Word', '|'], axis=1)
-
-#create vector from labels
+df = pd.read_csv(T, sep='\t', header=None, names=['T_Word', 'Label'])
+#create label vector
 text_labels = df['Label'].tolist()
-df = df.drop('Label', axis=1)
-
-# encode text_labels 0 for war, 1 for peace
+# encode text_labels 1 for war, 0 for peace
 labels =  []
 for el in text_labels:
     if el == 'WAR':
-        labels.append(0)
-    elif el == 'PEACE':
         labels.append(1)
+    elif el == 'PEACE':
+        labels.append(0)
     else:
         raise KeyError
 
@@ -36,10 +35,15 @@ df['bias'] = bias
 points = df.values.tolist()
 
 training_set = list(zip(points, labels)) #create datastructure [([point coordinates], label), ...]
-weights = [0.0] * len(points[0]) # initialize weight vector with 0
 
-def sigmoid(a, x):
-    return 1 / (1 + np.exp(-a*x))
+
+
+
+
+
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 def unit_step(x):
     return 1.0* (x>0)  # returns 1 if x >0
@@ -53,22 +57,34 @@ def predict(point, weights):
     '''
     return unit_step(np.dot(point[:-1], weights[:-1]) + weights[-1])
 
-for iteration in range(100):
+weights = [0.0] * len(points[0]) # initialize weight vector with 0
+for iteration in range(700):
+    error_count=0
     for point, label in training_set:
         dot_product = np.dot(point, weights)
-        result_sigmoid = sigmoid(alpha, dot_product)
-        #prediction = predict(point, weights) # prediction of classifier
+        result_sigmoid = sigmoid(dot_product)
+        prediction = predict(point, weights) # prediction of classifier
+        #print("input:",input, "output:",result, 'Label: ', desired_out, "Correctly Classified: ", decision_boundary(result) == desired_out)
+        #print("output result:", result, 'Label: ', label, "Correctly Classified: ", decision_boundary(result) == label)
         error = label - result_sigmoid
-        if iteration == 50 or iteration == 99:
-            print(f'Iteration: {iteration} True result: {label} \t Output: {result_sigmoid}')
-        if abs(error) > 0.0:
+        if label !=prediction:
+            error_count+=1 # count nr. of incorrectly predicted points
             # Weight update
             for i,val in enumerate(point):
                 weights[i] += val * error * learning_rate
 
+    print('Nr. of errors in this iteration: ', error_count)
 
-# write weights into txt file
-with open('weights_pa2.txt', 'w', encoding='utf8') as f:
-    for el in weights:
-        f.write(str(el))
-        f.write('\n')
+    # Stopping Criterion
+    if error_count == 0:
+        print("#" * 60)
+        print('Nr of iterations: ', iteration)
+        print('Weights: ', weights)
+        print("#" * 60)
+
+        # write weights into txt file
+        with open('weights_pa2.txt', 'w', encoding='utf8') as f:
+            for el in weights:
+                f.write(str(el))
+                f.write('\n')
+        break

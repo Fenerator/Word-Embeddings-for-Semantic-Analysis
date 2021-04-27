@@ -123,7 +123,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*.txt
+
 
 
 PA1/cos_dist_matrix_df
@@ -133,3 +133,23 @@ PA1/cos_sim_matrix_df
 PA1/PPMI_df
 
 PA1/preprocessed_file
+
+PA3/.~lock.Co_occurence_df#
+
+PA3/.~lock.model1#
+
+PA3/Co_occurence_df
+
+PA3/model1
+
+PA3/pa3_T.txt2
+
+PA3/PPMI_df
+
+PA3/dense_df
+
+PA3/.~lock.PPMI_df#
+
+PA1/filesPA3/
+
+PA3/results_df.txt

@@ -1,0 +1,8 @@
+evaluation	Results sparse	Results dense
+single	0.91	0.53
+cval_1	0.44	0.0
+cval_2	0.22	0.0
+cval_3	0.67	0.67
+cval_4	0.78	1.0
+cval_5	0.78	1.0
+cval_AVG	0.58	0.53
