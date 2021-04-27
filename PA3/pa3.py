@@ -336,7 +336,6 @@ def cross_validation(T, matrix, get_from_row=True):
 
 def main():
     # get arguments:
-    '''
     args = parse_args()
     T = args.T
     B = args.B
@@ -345,6 +344,7 @@ def main():
     T = 'pa3_T.txt'
     B = 'pa3_B.txt'
     textfile = 'pa3_input_text.txt'
+    '''
 
     # Get matrices
     sparse_matrix = get_sparse(textfile, B, T)
@@ -370,7 +370,8 @@ def main():
     description = ['single', 'cval_1', 'cval_2', 'cval_3', 'cval_4', 'cval_5', 'cval_AVG']
 
     results_df = pd.DataFrame(list(zip(description, results_sparse, results_dense)), columns=['evaluation', 'Results sparse', 'Results dense'])
-    results_df.round(2).to_csv('results.txt', encoding='utf-8', sep ='\t', index=False)
-
+    results_df.round(2).to_csv('results_df.txt', encoding='utf-8', sep ='\t', index=False)
+    print(results_df)
+    print('Saved results to results_df.txt')
 if __name__ == "__main__":
     main()
