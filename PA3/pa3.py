@@ -14,16 +14,12 @@ from gensim import utils
 import gensim.models
 import tempfile
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
-
     parser.add_argument("--T", type=str, help="pa3_T.txt file", required=True)
     parser.add_argument("--B", type=str, help="pa3_B.txt file", required=True)
     parser.add_argument("--text", type=str, help="Input txt file", required=True)
-
     args = parser.parse_args()
-
     return args
 
 # Code from PA1____________________________________________________________________________
@@ -118,7 +114,7 @@ def get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words
     center_sums = get_sums(Co_occurence_df, 0) # axis = 0 -> center sum
     context_sums = get_sums(Co_occurence_df, 1)  # axis = 1 -> context sum
     text_len = len(text_list)
-    print(len(center_words_list), len(context_words_list))
+    #print(len(center_words_list), len(context_words_list))
     for cent_ind in range(len(center_words_list)): # for each center word
         for cont_index in range(len(context_words_list)):  # for each context word
             var = (center_sums[cent_ind]/text_len) * (context_sums[cont_index]/text_len)
@@ -142,7 +138,7 @@ def get_sums(Co_occurence_df, axis):
 
 # _________________________________________________________________________________________
 
-def get_sparse(textfile, B, T): # TODO get right vectors!
+def get_sparse(textfile, B, T):
     """returns PMI weighted coocurrence matrix from PA1"""
 
     # Step 1: Preprocessing
@@ -162,11 +158,10 @@ def get_sparse(textfile, B, T): # TODO get right vectors!
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
     #print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
 
-
     return PPMI_df
 
 
-def get_dense(textfile, B_list):
+def get_dense(textfile, T_list, len_B_list):
     """returns word2vec representation"""
 
     class MyCorpus:
@@ -175,7 +170,7 @@ def get_dense(textfile, B_list):
         def __iter__(self):
             #corpus_path = 'pa3_input_text.txt'
             corpus_path = textfile
-            for line in open(corpus_path):
+            for line in open(corpus_path): # same preprocessing as in PA1
                 # assume there's one document per line, tokens separated by whitespace
                 line = line.split()
                 line = [word.lower() for word in line]  # set to lowercase
@@ -191,16 +186,16 @@ def get_dense(textfile, B_list):
     #model = gensim.models.Word2Vec(sentences=sentences, window=5, vector_size=83, epochs=60, workers=1) # TODO use this here
 
     vectors = []
-    for el in B_list:
+    for el in T_list:
         try:
-            vectors.append(model.wv[el].tolist()) # TODO how to handle these cases? now -> 0 vector
-        except KeyError:
-            print('Key Error with ', el)
-            vectors.append(83* [0]) # TODO get that number from somewhere
+            vectors.append(model.wv[el].tolist())
+        except KeyError: # handle missing cases by creating 0 vector
+            print('Key Error with', el, ' using 0-Vector instead')
+            vectors.append(len_B_list* [0])
 
     # Make dataframe
     #print('Vectors: ', vectors, type(vectors[0]))
-    dense_df = pd.DataFrame(list(zip(B_list, vectors)), columns=['B_list', 'vectors'])
+    dense_df = pd.DataFrame(list(zip(T_list, vectors)), columns=['T_list', 'vectors'])
     dense_df.to_csv('dense_df', encoding='utf-8')
     return dense_df
 
@@ -301,7 +296,7 @@ def get_accuracy(training_set, weights):
     total = len(training_set)
 
     correct = total-error_count
-    print(f'correct/total: {correct} , {total}')
+    #print(f'correct/total: {correct} , {total}')
     return correct/total
 
 def single_evaluation(T, matrix, get_from_row=True):
@@ -332,9 +327,8 @@ def cross_validation(T, matrix, get_from_row=True):
         accuracies.append(accuracy)
 
     accuracies_mean = average(accuracies)
-    print(f'lengths of test set: {lengths}')
-
-    return (accuracies, accuracies_mean)
+    accuracies.append(accuracies_mean) # last entry is mean
+    return accuracies
 
 
 
@@ -354,30 +348,29 @@ def main():
 
     # Get matrices
     sparse_matrix = get_sparse(textfile, B, T)
-    #print(sparse_matrix)
+    B_list = preprocessing(B, contains_labels=False)
+    len_B_list = len(B_list)
     T_list = preprocessing(T, contains_labels=True) # sets which vectors need to be considered in dense matrix
-    #print(T_list)
-    dense_matrix = get_dense(textfile, T_list)
-    #print(dense_matrix)
+    dense_matrix = get_dense(textfile, T_list, len_B_list)
 
     # classify sparse
     accuracy_sparse = single_evaluation(T, sparse_matrix, get_from_row=True)
-    print(f'Accuracy sparse: {accuracy_sparse}')
     cross_val_sparse = cross_validation(T, sparse_matrix, get_from_row=True)
-    print(f'Cross val spase: {cross_val_sparse}')
+
     # classify dense
     accuracy_dense = single_evaluation(T, dense_matrix, get_from_row=False)
-    print(f' Accuracy dense {accuracy_dense}')
     cross_val_dense = cross_validation(T, dense_matrix, get_from_row=False)
-    print(f'Cross val dense: {cross_val_dense}')
 
+    # make results.txt file
+    # make lists
+    results_sparse = cross_val_sparse[:]
+    results_sparse.insert(0, accuracy_sparse)
+    results_dense = cross_val_dense[:]
+    results_dense.insert(0, accuracy_dense)
+    description = ['single', 'cval_1', 'cval_2', 'cval_3', 'cval_4', 'cval_5', 'cval_AVG']
 
-
-
-
-
-
+    results_df = pd.DataFrame(list(zip(description, results_sparse, results_dense)), columns=['evaluation', 'Results sparse', 'Results dense'])
+    results_df.round(2).to_csv('results.txt', encoding='utf-8', sep ='\t', index=False)
 
 if __name__ == "__main__":
     main()
-
