@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''
+INSTRUCTIONS TO RUN FILE:
+    python3 pa3.py --T pa3_T.txt --B pa3_B.txt --text pa3_input_text.txt
+'''
 import sys
 import time
 import argparse
