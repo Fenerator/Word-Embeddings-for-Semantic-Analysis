@@ -151,7 +151,7 @@ def get_sparse(textfile, B, T): # TODO get right vectors!
     context_words_list = preprocessing(B)  # context words, ehem. T_list
 
     # Step 2: raw Co-occurence matrix
-    window_size = 5
+    window_size = 5 # same as word to vec
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, center_words_list, context_words_list, window_size)
     Co_occurence_df = to_df(cooccurrence_matrix, context_words_list)
     Co_occurence_df.to_csv('Co_occurence_df', encoding='utf-8')
@@ -187,8 +187,8 @@ def get_dense(textfile, B_list):
                 yield line
 
     sentences = MyCorpus()
-    model = gensim.models.Word2Vec(sentences=sentences, vector_size=83, epochs=1, workers=1)
-    #model = gensim.models.Word2Vec(sentences=sentences, vector_size=45, epochs=60, workers=1) # TODO use this here
+    model = gensim.models.Word2Vec(sentences=sentences, window=5, vector_size=83, epochs=1, workers=1)
+    #model = gensim.models.Word2Vec(sentences=sentences, window=5, vector_size=83, epochs=60, workers=1) # TODO use this here
 
     vectors = []
     for el in B_list:
@@ -199,7 +199,7 @@ def get_dense(textfile, B_list):
             vectors.append(83* [0]) # TODO get that number from somewhere
 
     # Make dataframe
-    print('Vectors: ', vectors, type(vectors[0]))
+    #print('Vectors: ', vectors, type(vectors[0]))
     dense_df = pd.DataFrame(list(zip(B_list, vectors)), columns=['B_list', 'vectors'])
     dense_df.to_csv('dense_df', encoding='utf-8')
     return dense_df
@@ -272,9 +272,9 @@ def train(training_set):
             result_sigmoid = sigmoid(alpha, dot_product)
             error = label - result_sigmoid
             prediction = predict(point, weights)  # prediction of classifier
-            if iteration == 50 or iteration == 99:
-                print(f'Iteration: {iteration} True result: {label} \t Output: {result_sigmoid}')
-            if abs(error) > 0.0:
+            #if iteration == 99:
+                #print(f'Iteration: {iteration} True result: {label} \t Output: {result_sigmoid} \t Evaluation: {prediction==label}')
+            if abs(error) > 0.001:
                 # Weight update
                 for i, val in enumerate(point):
                     weights[i] += val * error * learning_rate
@@ -291,14 +291,24 @@ def predict(point, weights):
     return unit_step(np.dot(point[:-1], weights[:-1]) + weights[-1])
 
 # ______________________________________________________________________________________________________________________
-def single_evaluation(training_set, weights):
+def get_accuracy(training_set, weights):
     error_count = 0
     for point, label in training_set:
         prediction = predict(point, weights)  # prediction of classifier
         if label !=prediction:
             error_count+=1 # count nr. of incorrectly predicted points
-    return error_count
+    total = len(training_set)
+    correct = total-error_count
 
+    return correct/total
+
+def single_evaluation(T, matrix, get_from_row=True):
+    labels = get_labels(T)
+    training_set = get_trainset(labels, matrix, get_from_row)
+    weights = train(training_set)
+    accuracy = get_accuracy(training_set, weights)
+
+    return accuracy
 
 def cross_validation_eval():
     ...
@@ -315,28 +325,23 @@ def main():
     B = 'pa3_B.txt'
     textfile = 'pa3_input_text.txt'
 
-    # Get sparse matrix
+    # Get matrices
     sparse_matrix = get_sparse(textfile, B, T)
     #print(sparse_matrix)
     T_list = preprocessing(T, contains_labels=True) # sets which vectors need to be considered in dense matrix
     #print(T_list)
     dense_matrix = get_dense(textfile, T_list)
-    print(dense_matrix)
+    #print(dense_matrix)
 
     # classify sparse
-    labels = get_labels(T)
-    training_set = get_trainset(labels, sparse_matrix, get_from_row=True)
-    print('trainset: ', training_set[0])
-    weights = train(training_set)
-    nr_of_errors = single_evaluation(training_set, weights)
-    print(nr_of_errors)
+    accuracy_sparse = single_evaluation(T, sparse_matrix, get_from_row=True)
+    print(f'Accuracy sparse: {accuracy_sparse}')
 
-    # classify dense #TODO check solutions of EMMA in video.
-    training_set = get_trainset(labels, dense_matrix, get_from_row=False) #get vectors from 1 cell
-    print('trainset: ', training_set[0])
-    weights = train(training_set)
-    nr_of_errors = single_evaluation(training_set, weights)
-    print(nr_of_errors)
+    # classify dense
+    accuracy_dense = single_evaluation(T, dense_matrix, get_from_row=False)
+
+    print(f' Accuracy dense {accuracy_dense}')
+
 
 
 
