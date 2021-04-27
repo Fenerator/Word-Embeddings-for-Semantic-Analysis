@@ -186,8 +186,8 @@ def get_dense(textfile, T_list, len_B_list):
                 yield line
 
     sentences = MyCorpus()
-    model = gensim.models.Word2Vec(sentences=sentences, window=5, vector_size=83, epochs=1, workers=1)
-    #model = gensim.models.Word2Vec(sentences=sentences, window=5, vector_size=83, epochs=60, workers=1) # TODO use this here
+    #model = gensim.models.Word2Vec(sentences=sentences, window=5, vector_size=83, epochs=1, workers=1)
+    model = gensim.models.Word2Vec(sentences=sentences, window=5, vector_size=83, epochs=60, workers=1)
 
     vectors = []
     for el in T_list:
@@ -266,14 +266,14 @@ def train(training_set):
     alpha = 2
     weights = [0.0] * len(training_set[0][0])  # initialize weight vector with 0
 
-    for iteration in range(100): # use as stopping criterion
+    for iteration in range(500): # use as stopping criterion
         for point, label in training_set:
             dot_product = np.dot(point, weights)
             result_sigmoid = sigmoid(alpha, dot_product)
             error = label - result_sigmoid
             prediction = predict(point, weights)  # prediction of classifier
-            #if iteration == 99:
-                #print(f'Iteration: {iteration} True result: {label} \t Output: {result_sigmoid} \t Evaluation: {prediction==label}')
+            if iteration == 499:
+                print(f'Iteration: {iteration} True result: {label} \t Output: {result_sigmoid} \t Correct? {prediction==label}')
             if abs(error) > 0.001:
                 # Weight update
                 for i, val in enumerate(point):
