@@ -26,7 +26,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-# Code from PA1____________________________________________________________________________
+# Code from PA1 copied here (since submission allows only one py file)__________________________________________________
 def preprocessing(textfile, contains_labels=False):
     if contains_labels:
         # remove labels and ad to list:
@@ -118,7 +118,7 @@ def get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words
     center_sums = get_sums(Co_occurence_df, 0) # axis = 0 -> center sum
     context_sums = get_sums(Co_occurence_df, 1)  # axis = 1 -> context sum
     text_len = len(text_list)
-    #print(len(center_words_list), len(context_words_list))
+
     for cent_ind in range(len(center_words_list)): # for each center word
         for cont_index in range(len(context_words_list)):  # for each context word
             var = (center_sums[cent_ind]/text_len) * (context_sums[cont_index]/text_len)
@@ -155,12 +155,12 @@ def get_sparse(textfile, B, T):
     cooccurrence_matrix = get_cooccurrence_matrix(text_list, center_words_list, context_words_list, window_size)
     Co_occurence_df = to_df(cooccurrence_matrix, context_words_list)
     Co_occurence_df.to_csv('Co_occurence_df', encoding='utf-8')
-    # print('Cooccurence matrix', Co_occurence_df.round(2).transpose())  # transposing seems nec. acc. to req.
+
     # use PPMI scores as weights
     PPMI = get_PPMI_values(text_list, Co_occurence_df, center_words_list, context_words_list)
     PPMI_df = to_df(PPMI, context_words_list).transpose()
     PPMI_df.to_csv('PPMI_df', encoding='utf-8')
-    #print('Cooccurence matrix (PPMI weighted)', PPMI_df.round(2).transpose())
+
 
     return PPMI_df
 
@@ -198,7 +198,6 @@ def get_dense(textfile, T_list, len_B_list):
             vectors.append(len_B_list* [0])
 
     # Make dataframe
-    #print('Vectors: ', vectors, type(vectors[0]))
     dense_df = pd.DataFrame(list(zip(T_list, vectors)), columns=['T_list', 'vectors'])
     dense_df.to_csv('dense_df', encoding='utf-8')
     return dense_df
@@ -245,18 +244,15 @@ def get_trainset(labels, matrix_df, get_from_row=True):
         matrix_df['bias'] = bias
         # create vector from row of df including bias term
         points = matrix_df.values.tolist()
-        #print(points)
+
     else:
         points = matrix_df['vectors'].tolist()
         # add 1 at each last coordinate
         for point in points:
             point.append(1)
-        #print('Dense Matrix list: ', matrix_df['vectors'].tolist())
 
     # create train structure:
     training_set = list(zip(points, labels))  # create datastructure [([point coordinates], label), ...]
-
-
 
     return training_set
 
@@ -300,7 +296,7 @@ def get_accuracy(training_set, weights):
     total = len(training_set)
 
     correct = total-error_count
-    #print(f'correct/total: {correct} , {total}')
+
     return correct/total
 
 def single_evaluation(T, matrix, get_from_row=True):
