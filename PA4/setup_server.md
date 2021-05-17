@@ -28,6 +28,9 @@ Create a new virtual environment using the python `venv` module in the venvs fol
 
 **Important**: Activate the newly created virtual environment.
 
+     source /home/csmt_st16/venvs/transformers/bin/activate
+
+
 **Upgrade pip**
 
 This is important for some of the packages that are installed later.

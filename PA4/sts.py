@@ -27,7 +27,9 @@ if __name__ == '__main__':
     # https://huggingface.co/models
     # For each model we need to specify the model architecture - 'bert, 'electra', 'xlm', etc.
     # TODO: Select the model we are working with and store the selection in an appropriate variable
-
+    models_dict = {'classla/bcms-bertic': 'electra'}
+    
+    
 
     # Pearson correlation coefficient is the standard performance metric for this task
     # Define a simple version of the Pearson correlation function that returns only the correlation score,
@@ -63,6 +65,9 @@ if __name__ == '__main__':
     # TODO: Choose an appropriate working directory for the transformers models
     # The parameters that you need to be set are 'output_dir', 'cache_dir' and 'tensorboard_dir'
     # Call the subfolders of the working directory 'outputs', 'cache' and 'runs' respectively.
+    parameter_dict['output_dir'] = '/home/csmt_st16/outputs_bert/outputs'
+    parameter_dict['cache_dir'] = '/home/csmt_st16/outputs_bert/cache'
+    parameter_dict['tensorboard_dir'] = '/home/csmt_st16/outputs_bert/runs'
 
     # Reduce the output details - set to False to enable a detailed overview of the training process
     parameter_dict['silent'] = True
@@ -71,7 +76,8 @@ if __name__ == '__main__':
     parameter_dict['do_lower_case'] = False
 
     # Experiment with increasing the number of training epochs and see how it affects the results
-    parameter_dict['num_train_epochs'] = 1
+    # TODO change
+    parameter_dict['num_train_epochs'] = 8
 
     # Some other options you could explore that influence the model - the default values are given below
     # If your GPU runs out of memory, try lowering the batch size parameter
