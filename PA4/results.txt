@@ -1,0 +1,22 @@
+1) Fine-tuning 
+Model: classla/bcms-bertic
+	Epochs=1	Epochs=3	Epochs=5	Epochs=8
+Fold 1	0.8677773471358109	0.8984712495920629	0.9097233351732008	0.8966678681703028
+Fold 2	0.8863138133791969	0.9231626264320263	0.9236088209006843	0.9195170657671193
+Fold 3	0.8670512459377913	0.8859159204889862	0.8931985749344195	0.8906772721951106
+Fold 4	0.8634829635376359	0.904606497934912	0.912297174770886	0.9054770916559939
+Fold 5	0.8630959949369914	0.8982443067266036	0.9113283791311788	0.902738904364087
+Final	0.8695	0.9021	0.9100	0.9030
+
+2)
+Correlation between calculated and correct similarity scores: 0.3399105689299429
+
+3)
+- Fine-tuning results: -
+Pretrained model starts with already very good correlation to the gold standard of around 0.87. 1 would be a perfect correlation, and hence an accuracy of 100% in the task of semantic similarity detection. Then with each epoch of fine-tuning, the correlation increases, model gets better adapted to the task, until it reaches best result at Epoch 5. From there on the correlation seems to decrease again (see Epochs=8). Probabely due to overfitting (model learns examples 'by heart' and hence cannot effectively generalize).
+
+- Correlation -
+FastText word embeddings are not adapted in the same amount to the specific domain at hand. These embeddings and their cosine similarity seem not to be correlated much to the gold standard (correlation of 0.3399). Thus also the improved version of skipgram (FastText) with its subword generation and negative sampling seem not to be able to adequately solve the task of semantic similarity detection. These vectors, even though they were trained on the Serbian language, seem not able to detect semantics and their similarities in different sentences. Fine-tuning to adapt the word vectors to the specific task/domain is not possible. The vectors were trained on Common Crawl and Wikipedia and not on news articles. This makes a difference. 
+
+- Comparison -
+The BERT model was adepted to the exact domain/task to improve the contextualized word embeddings. On the other hand, FastText vectors are static and pretrained on an other domain, but the same language. BERT embeddings are much better at representing semantics and their similarities compared to FastText embeddings. 
