@@ -5,7 +5,7 @@
 
 to run program enter:
 ```
- python3 PA1.py text_V2.txt B_V2.txt T_V2.txt
+ python3 PA1/PA1.py text_V2.txt B_V2.txt T_V2.txt
 ```
 ### Arguments:
 1. text file
